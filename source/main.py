@@ -6,15 +6,20 @@ from random import randint
 class Game:
     # initialize variables
     fruit = False
-    boardSize = 8
     headX = headY = dirX = dirY = 0
     bodyPeicesX = []
     bodyPeicesY = []
     fruitX = 0
     fruitY = 0
-    initLength = 3
     counter = 0
-    
+    gameStarted = False
+    gameOver = False
+    highScore = 0
+
+    boardSize = 8
+    speed = 500
+    initLength = 3
+
     # calls once when class object is constructed
     def __init__(self, master):
         # bind keys w, a, s, and d to corresponding funcs
@@ -35,9 +40,9 @@ class Game:
                 list.extend(item.winfo_children())
         return list
 
-
     # TODO change func name to be more clear
     # loops the snake to the other side of the screen if it hits one edge
+
     def loop(self):
         if self.headX > self.boardSize-1:
             self.headX = 0
@@ -48,14 +53,14 @@ class Game:
         if self.headY < 0:
             self.headY = self.boardSize-1
 
-    
     # deletes body x and y at index 0
+
     def delBody(self):
         del self.bodyPeicesX[0]
         del self.bodyPeicesY[0]
 
-    
     # calculates new head pos based on input dir
+
     def updateHeadPos(self):
         # adds current head pos to body pos list before moving
         self.bodyPeicesX.append(self.headX)
@@ -65,12 +70,14 @@ class Game:
         self.headY += self.dirY
         # calls loop() to loop snake around edge of the screen if head pos exceeds board size
         self.loop()
-        if self.counter > self.initLength-1: 
+        if self.counter > self.initLength-1:
             if self.headX == self.fruitX and self.headY == self.fruitY:
                 self.fruit = False
             else:
                 self.delBody()
-        else: 
+            if self.dirX != 0 or self.dirY != 0:
+                self.gameStarted = True
+        else:
             self.counter += 1
 
     # deletes all widgets from a list returned by allChildren
@@ -93,7 +100,7 @@ class Game:
 
     # generates a new fruit pos if fruit is not currently present and stores it in global vars fruitX and fruitY
     def genFruit(self):
-        # TODO stop generating within body or at head pos
+        # TODO stop fruit generating within body or at head pos
         # * for graphics, rotate head based on dir
         if not self.fruit:
             self.fruitX = randint(0, self.boardSize-1)
@@ -101,11 +108,13 @@ class Game:
         self. fruit = True
 
     # generates board to be rendered by displayBoard() - this func is the root of all the snake logic and rendering
-    # TODO optimize func to use less iterations - just iterate through boyPieces and add them to board 
+    # TODO optimize func to use less iterations - just iterate through boyPieces and add them to board
     def updateBoard(self, master):
         # self explanetory, updates head pos with updateHeadPos()
         self.updateHeadPos()
-        # TODO check for head and body collision
+        for i in range(len(self.bodyPeicesX)):
+            if self.bodyPeicesX[i] == self.headX and self.bodyPeicesY[i] == self.headY and self.gameStarted:
+                self.gameOver = True
         # create a array with size equal to var boardSize
         board = [[" "]*self.boardSize for i in range(self.boardSize)]
         # calls genFruit() to get a new fruit pos and adds it to board
@@ -125,7 +134,35 @@ class Game:
     def gameLoop(self, master):
         self.updateBoard(master)
         # calls itself every 500 milliseconds
-        master.after(500, lambda: self.gameLoop(master))
+        if not self.gameOver:
+            master.after(self.speed, lambda: self.gameLoop(master))
+        else:
+            self.restart(master)
+
+    def restart(self, master):
+        self.deleteAllWidgets(master)
+        self.fruit = False
+        self.headX = self.headY = self.dirX = self.dirY = 0
+        self.bodyPeicesY = []
+        self.fruitX = 0
+        self.fruitY = 0
+        self.counter = 0
+        self.gameStarted = False
+        self.gameOver = False
+        if len(self.bodyPeicesX) > self.highScore:
+            Label(master, text="You improved your highscore by: " +
+                  str(len(self.bodyPeicesX)-self.highScore)).grid(row=0, column=0)
+            Label(master, text="Your old highscore was: " +
+                  str(self.highScore)).grid(row=4, column=0)
+            self.highScore = len(self.bodyPeicesX)
+        Label(master, text="Game over!").grid(row=1, column=0)
+        Label(master, text="Your score was: " +
+              str(len(self.bodyPeicesX))).grid(row=2, column=0)
+        Label(master, text="Your highscore is: " +
+              str(self.highScore)).grid(row=3, column=0)
+        self.bodyPeicesX = []
+        # TODO add restart button
+        master.after(3000, lambda: self.gameLoop(master))
 
     # funcs that are bound to input w, a, s, and d
     def a(self, _event=None):
@@ -143,6 +180,7 @@ class Game:
     def s(self, _event=None):
         self.dirX = 1
         self.dirY = 0
+
 
 # init Tk instance
 root = Tk()
