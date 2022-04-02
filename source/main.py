@@ -5,7 +5,7 @@ from tkinter.tix import Tk
 from tkinter.ttk import Button, Label
 
 
-class Game:
+class Snake:
     # initialize variables
     fruit = False
     headX = headY = dirX = dirY = 0
@@ -188,10 +188,35 @@ class Game:
         self.dirX = 1
         self.dirY = 0
 
+class Pong:
+    boardSize = 12
+    paddleSize = 3
+    padding = 1
+    dir = 0
+    ballDirX = 0
+    ballDirY = 0
+    
+    def __init__(self, master):
+        # bind keys w, a, s, and d to corresponding funcs
+        master.bind('w', self.w)
+        master.bind('s', self.s)
+    
+    def w(self):
+        self.dir = 1
+    
+    def s(self):
+        self.dir = -1
+        
+    def generateBoard(self):
+        for i in range(10):
+            d = 1-(10-i)/10
+            board = [[" "]*8 for i in range(8)]
+            board[round(abs(x1+(d*x2)-(d*x1)))][round(abs(y1+(d*y2)-(d*y1)))] = "B"
+        
 
 # init Tk instance
 root = Tk()
 # init game class instance
-GameInstance = Game(root)
+GameInstance = Pong(root)
 # call tkinter loop
 root.mainloop()
