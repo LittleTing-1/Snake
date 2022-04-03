@@ -189,30 +189,109 @@ class Snake:
         self.dirY = 0
 
 class Pong:
-    boardSize = 12
+    boardSize = 8
     paddleSize = 3
     padding = 1
     dir = 0
     ballDirX = 0
     ballDirY = 0
+    gameStarted = False
+    gameOver = False
+    highScore = 0
+    myFont = None
+    fontSize = 16
+    fontWeight = "normal"
+    fontFamily = "ubuntu"
+    originX = 4
+    originY = 4
+    destX = 8
+    destY = 6
+    ballX = 0
+    ballY = 0
+    speed = 500
+    i = 0
     
     def __init__(self, master):
         # bind keys w, a, s, and d to corresponding funcs
         master.bind('w', self.w)
         master.bind('s', self.s)
+        self.gameLoop(master)
+        self.myFont = Font(family=self.fontFamily, size=self.fontSize)
     
     def w(self):
         self.dir = 1
     
     def s(self):
         self.dir = -1
-        
-    def generateBoard(self):
-        for i in range(10):
-            d = 1-(10-i)/10
-            board = [[" "]*8 for i in range(8)]
-            board[round(abs(x1+(d*x2)-(d*x1)))][round(abs(y1+(d*y2)-(d*y1)))] = "B"
-        
+    
+    # gets all widgets in inputted tkinter window and returns them in a list
+    def allChildren(self, master):
+        # get all widgets in master (tkinter window)
+        list = master.winfo_children()
+        # add all items in master to a list and return it
+        for item in list:
+            if item.winfo_children():
+                list.extend(item.winfo_children())
+        return list
+
+    # deletes all widgets from a list returned by allChildren
+    def deleteAllWidgets(self, master):
+        # gets all widgets in master with allChildren
+        widget_list = self.allChildren(master)
+        # iterates through all items in list and deletes with the tkinter delete() function
+        for item in widget_list:
+            item.destroy()
+
+    # renders board var to the screen
+    def displayBoard(self, board, master):
+        # delete all widgets to stop memory leak from widgets being overlayed but lower layers not being deleted
+        self.deleteAllWidgets(master)
+        # iterates through all board positions and renders it to the corresponding column and row with a label displaying a letter for what is there
+        for i in range(self.boardSize+1):
+            for j in range(self.boardSize+1):
+                Label1 = Label(master, text=board[i][j])
+                Label1.grid(row=j, column=i)
+                Label1.configure(font=self.myFont)
+                
+    def generateBoard(self,master):
+        board = [["   "]*9 for i in range(9)]  
+        self.interpolate()
+        if self.ballX == 8 or self.ballX == 0:
+            self.originX = self.ballX
+            self.originY = self.ballY
+            self.destX = abs(self.ballX-8)
+            self.destY = abs(self.ballY-8)
+            print(self.destX)
+            self.i = 1
+        if self.ballY == 0 or self.ballY == 8:
+            self.originX = self.ballX
+            self.originY = self.ballY
+            self.destY = abs(self.ballY)
+        board[self.ballX][self.ballY] = "B"
+        board[8][8] = "8"
+        board[0][0] = "0"
+        self.displayBoard(board,master)
+    
+    def interpolate(self):
+        d = (1-((10-self.i)/10))
+        self.ballX = round(abs(self.originX+(d*self.destX)-(d*self.originX)))
+        self.ballY = round(abs(self.originY+(d*self.destY)-(d*self.originY)))
+        print(self.ballX)
+        print(self.ballY)
+        print(d)
+        if self.i < 10:
+            self.i += 1
+    
+    def gameLoop(self, master):
+        self.generateBoard(master)
+        # calls itself every 500 milliseconds
+        if not self.gameOver:
+            master.after(self.speed, lambda: self.gameLoop(master))
+        else:
+            self.restart(master)
+
+    def restart(self, master):
+        pass
 
 # init Tk instance
 root = Tk()
