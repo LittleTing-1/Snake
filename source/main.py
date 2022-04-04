@@ -38,6 +38,7 @@ class Snake:
         master.bind('d', self.d)
         # begin game loop
         self.gameLoop(master)
+        # create the font
         self.myFont = Font(family=self.fontFamily, size=self.fontSize)
 
     # gets all widgets in inputted tkinter window and returns them in a list
@@ -76,6 +77,7 @@ class Snake:
         self.headY += self.dirY
         # calls loopToOtherSideOfScreen() to loop snake around edge of the screen if head pos exceeds board size
         self.loopToOtherSideOfScreen()
+        # delete body pos at index zero if not on fruit
         if self.counter > self.initLength-1:
             if self.headX == self.fruitX and self.headY == self.fruitY:
                 self.fruit = False
@@ -118,7 +120,6 @@ class Snake:
         self.fruit = True
 
     # generates board to be rendered by displayBoard() - this func is the root of all the snake logic and rendering
-    # TODO optimize func to use less iterations - just iterate through bodyPieces and add them to board
     def updateBoard(self, master):
         # self explanetory, updates head pos with updateHeadPos()
         self.updateHeadPos()
@@ -129,15 +130,11 @@ class Snake:
         board = [["   "]*self.boardSize for i in range(self.boardSize)]
         # calls genFruit() to get a new fruit pos and adds it to board
         self.genFruit()
+        # render fruit, body and then head
         board[self.fruitX][self.fruitY] = "F"
-        # add all body positions and head pos to board
-        for i in range(self.boardSize):
-            for j in range(self.boardSize):
-                for k in range(len(self.bodyPeicesX)):
-                    if i == self.bodyPeicesX[k] and j == self.bodyPeicesY[k]:
-                        board[i][j] = "B"
-                if self.headX == i and self.headY == j:
-                    board[i][j] = "H"
+        for i in range(len(self.bodyPeicesX)):
+            board[self.bodyPeicesX[i]][self.bodyPeicesY[i]] = "B"
+        board[self.headX][self.headY] = "H"
         # pass generated board to displayBoard for rendering
         self.displayBoard(board, master)
 
@@ -150,6 +147,7 @@ class Snake:
             self.restart(master)
 
     def restart(self, master):
+        # reset variables
         self.deleteAllWidgets(master)
         self.fruit = False
         self.headX = self.headY = self.dirX = self.dirY = 0
@@ -159,6 +157,7 @@ class Snake:
         self.counter = 0
         self.gameStarted = False
         self.gameOver = False
+        # display text on end screen
         if len(self.bodyPeicesX) > self.highScore:
             Label(master, text="You improved your highscore by: " +
                   str(len(self.bodyPeicesX)-self.highScore)).grid(row=0, column=0)
@@ -299,6 +298,7 @@ class Pong:
 # init Tk instance
 root = Tk()
 # init game class instance
-GameInstance = Pong(root)
+GameInstance = Snake(root)
+# GameInstance = Pong(root)
 # call tkinter loop
 root.mainloop()
